@@ -1,7 +1,7 @@
 import { Anchor } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Link } from "react-router";
-import { isApiError } from "../api/errors";
+import { isApiError, isCancelled } from "../api/errors";
 
 const UNAUTHORIZED_NOTIFICATION_ID = "unauthorized";
 
@@ -20,9 +20,12 @@ export function notifyUnauthorized(): void {
   });
 }
 
-/** Generic error toast for failed mutations. 401 is skipped: notifyUnauthorized handles it. */
+/**
+ * Generic error toast for failed mutations. 401 is skipped (notifyUnauthorized handles it), and so
+ * are requests cancelled by a settings change.
+ */
 export function notifyError(error: unknown): void {
-  if (isApiError(error) && error.kind === "unauthorized") {
+  if ((isApiError(error) && error.kind === "unauthorized") || isCancelled(error)) {
     return;
   }
   notifications.show({

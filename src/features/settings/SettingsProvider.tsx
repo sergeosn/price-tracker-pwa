@@ -6,17 +6,24 @@ import { loadSettings, saveSettings, type Settings } from "./storage";
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<Settings | null>(loadSettings);
+  const [requests, setRequests] = useState(() => new AbortController());
 
   const updateSettings = useCallback(
     (next: Settings) => {
       saveSettings(next);
+      // Data from another server or key must not leak into the new session: cancel requests that
+      // are still running (a late mutation result would be written into the cleared cache).
+      requests.abort();
+      setRequests(new AbortController());
       setSettings(next);
-      // Data from another server or key must not leak into the new session.
       queryClient.clear();
     },
-    [queryClient],
+    [queryClient, requests],
   );
 
-  const value = useMemo(() => ({ settings, updateSettings }), [settings, updateSettings]);
+  const value = useMemo(
+    () => ({ settings, signal: requests.signal, updateSettings }),
+    [settings, requests, updateSettings],
+  );
   return <SettingsContext value={value}>{children}</SettingsContext>;
 }

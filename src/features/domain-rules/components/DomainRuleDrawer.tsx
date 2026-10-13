@@ -37,23 +37,22 @@ function DomainRuleForm({ rule, onDone }: { rule?: DomainRule; onDone: () => voi
     validate: schemaResolver(domainRuleSchema, { sync: true }),
   });
 
-  function handleSubmit(values: DomainRuleFormValues) {
+  async function handleSubmit(values: DomainRuleFormValues) {
     const body = toDomainRuleBody(values);
-    const callbacks = {
-      onSuccess: () => {
-        notifications.show({ color: "green", message: rule ? "Shop updated" : "Shop added" });
-        onDone();
-      },
-      onError: (error: unknown) =>
-        handleFormError(error, form.setErrors, {
-          field: "domain",
-          message: "A rule for this domain already exists",
-        }),
-    };
-    if (rule) {
-      updateRule.mutate({ id: rule.id, body }, callbacks);
-    } else {
-      createRule.mutate(body, callbacks);
+    // Awaited rather than mutate() callbacks, which are skipped once the drawer is closed.
+    try {
+      if (rule) {
+        await updateRule.mutateAsync({ id: rule.id, body });
+      } else {
+        await createRule.mutateAsync(body);
+      }
+      notifications.show({ color: "green", message: rule ? "Shop updated" : "Shop added" });
+      onDone();
+    } catch (error) {
+      handleFormError(error, form.setErrors, {
+        field: "domain",
+        message: "A rule for this domain already exists",
+      });
     }
   }
 

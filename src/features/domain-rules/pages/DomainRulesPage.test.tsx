@@ -1,5 +1,5 @@
 import { screen, within } from "@testing-library/react";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, delay, http } from "msw";
 import { describe, expect, it } from "vitest";
 import type { DomainRule } from "../../../api/types";
 import { makeDomainRule, page } from "../../../test/factories";
@@ -130,5 +130,24 @@ describe("DomainRulesPage", () => {
     await user.click(await screen.findByRole("button", { name: "Delete" }));
 
     expect(await screen.findByText(/No shop rules/)).toBeInTheDocument();
+  });
+
+  it("reports a failed save after the drawer was closed", async () => {
+    serveRules([]);
+    server.use(
+      http.post(apiPath("/api/v1/domain-rules"), async () => {
+        await delay(100);
+        return HttpResponse.json({ detail: "Database unavailable" }, { status: 503 });
+      }),
+    );
+    const { user } = renderApp({ route: "/domain-rules" });
+
+    await user.click(await screen.findByRole("button", { name: "Add shop" }));
+    await user.type(screen.getByLabelText(/Domain/), "amazon.ca");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(await screen.findByText("Request failed")).toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ import {
   NETWORK_ERROR_MESSAGE,
   apiErrorFromResponse,
   isApiError,
+  isCancelled,
   networkError,
 } from "./errors";
 
@@ -66,5 +67,13 @@ describe("isApiError", () => {
   it("recognises ApiError instances only", () => {
     expect(isApiError(new ApiError("server", "x"))).toBe(true);
     expect(isApiError(new Error("x"))).toBe(false);
+  });
+});
+
+describe("isCancelled", () => {
+  it("recognises aborted requests only", () => {
+    expect(isCancelled(networkError(new DOMException("aborted", "AbortError")))).toBe(true);
+    expect(isCancelled(networkError(new TypeError("Failed to fetch")))).toBe(false);
+    expect(isCancelled(new ApiError("server", "x"))).toBe(false);
   });
 });

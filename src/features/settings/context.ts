@@ -5,6 +5,8 @@ import type { Settings } from "./storage";
 export interface SettingsContextValue {
   /** null until the user saves an API URL and key. */
   settings: Settings | null;
+  /** Aborted when the settings change, so late responses never reach the new session's cache. */
+  signal: AbortSignal;
   updateSettings: (settings: Settings) => void;
 }
 
@@ -20,8 +22,11 @@ export function useSettings(): SettingsContextValue {
 
 /** The API client for the saved settings. Only for screens behind <RequireSettings>. */
 export function useApi(): ApiClient {
-  const { settings } = useSettings();
-  const client = useMemo(() => (settings ? createApiClient(settings) : null), [settings]);
+  const { settings, signal } = useSettings();
+  const client = useMemo(
+    () => (settings ? createApiClient(settings, signal) : null),
+    [settings, signal],
+  );
   if (!client) {
     throw new Error("API settings are not configured");
   }

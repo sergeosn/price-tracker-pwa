@@ -27,6 +27,15 @@ export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }
 
+/** A request cancelled on purpose (the settings changed), not a failure to report. */
+export function isCancelled(error: unknown): boolean {
+  if (!isApiError(error) || error.kind !== "network") return false;
+  const { cause } = error;
+  return (
+    typeof cause === "object" && cause !== null && "name" in cause && cause.name === "AbortError"
+  );
+}
+
 /** `fetch` itself failed: server down, wrong URL, or blocked by CORS. */
 export function networkError(cause: unknown): ApiError {
   return new ApiError("network", NETWORK_ERROR_MESSAGE, { cause });

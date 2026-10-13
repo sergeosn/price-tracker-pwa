@@ -20,15 +20,20 @@ export function NewProductPage() {
     validate: schemaResolver(newProductSchema, { sync: true }),
   });
 
-  function handleSubmit(values: NewProductFormValues) {
-    createProduct.mutate(toProductCreate(values), {
-      onSuccess: (product) => navigate(`/products/${product.id}`, { replace: true }),
-      onError: (error) =>
-        handleFormError(error, form.setErrors, {
-          field: "url",
-          message: "This product is already being tracked",
-        }),
-    });
+  // Checking the price takes seconds and the user may leave meanwhile. The awaited promise still
+  // reports a failure; the onSuccess callback is skipped once this page is gone, so a late success
+  // does not pull the user back here.
+  async function handleSubmit(values: NewProductFormValues) {
+    try {
+      await createProduct.mutateAsync(toProductCreate(values), {
+        onSuccess: (product) => navigate(`/products/${product.id}`, { replace: true }),
+      });
+    } catch (error) {
+      handleFormError(error, form.setErrors, {
+        field: "url",
+        message: "This product is already being tracked",
+      });
+    }
   }
 
   return (

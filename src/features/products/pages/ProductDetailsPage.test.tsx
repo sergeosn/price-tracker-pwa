@@ -184,4 +184,62 @@ describe("ProductDetailsPage", () => {
     expect(await screen.findByText("No change")).toBeInTheDocument();
     expect(checks).toBe(1);
   });
+
+  it("reports a failed save after the edit drawer was closed", async () => {
+    serveProduct();
+    server.use(
+      http.patch(apiPath("/api/v1/products/7"), async () => {
+        await delay(100);
+        return HttpResponse.json({ detail: "Database unavailable" }, { status: 503 });
+      }),
+    );
+    const { user } = renderApp({ route: "/products/7" });
+
+    await user.click(await screen.findByRole("button", { name: "Product actions" }));
+    await user.click(screen.getByRole("menuitem", { name: "Edit" }));
+    await user.type(screen.getByLabelText("CSS price selector"), "span.price");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(await screen.findByText("Request failed")).toBeInTheDocument();
+  });
+
+  it("never shows the previous server's product after a check that was running during a switch", async () => {
+    serveProduct();
+    let oldCheckAnswered = false;
+    server.use(
+      http.post(apiPath("/api/v1/products/7/check"), async () => {
+        await delay(300);
+        oldCheckAnswered = true;
+        return HttpResponse.json({
+          result: { status: "ok", price: "1299.00", changed: false, error: null },
+          product: { ...product, name: "Old server phone" },
+        });
+      }),
+      http.get("http://other.test/api/v1/products", () =>
+        HttpResponse.json(page([makeProduct({ id: 7, name: "New server phone" })])),
+      ),
+      http.get("http://other.test/api/v1/products/7", async () => {
+        await delay(100);
+        return HttpResponse.json(makeProduct({ id: 7, name: "New server phone" }));
+      }),
+      http.get("http://other.test/api/v1/products/7/history", () => HttpResponse.json(page([]))),
+    );
+    const { user } = renderApp({ route: "/products/7" });
+
+    await user.click(await screen.findByRole("button", { name: "Check now" }));
+    await user.click(screen.getByRole("link", { name: "Settings" }));
+    const apiUrl = screen.getByLabelText("API URL");
+    await user.clear(apiUrl);
+    await user.type(apiUrl, "http://other.test");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await expect.poll(() => oldCheckAnswered).toBe(true);
+    // Give a late response time to reach the cache before opening the product.
+    await delay(50);
+    await user.click(await screen.findByRole("link", { name: "New server phone" }));
+
+    expect(screen.queryByRole("heading", { name: "Old server phone" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "New server phone" })).toBeInTheDocument();
+  });
 });

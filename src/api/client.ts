@@ -9,8 +9,9 @@ export interface ApiConfig {
   apiKey: string;
 }
 
-export function createApiClient({ apiUrl, apiKey }: ApiConfig): ApiClient {
-  const client = createClient<paths>({ baseUrl: apiUrl });
+/** `signal` cancels every request of this client, e.g. when the user switches servers. */
+export function createApiClient({ apiUrl, apiKey }: ApiConfig, signal?: AbortSignal): ApiClient {
+  const client = createClient<paths>({ baseUrl: apiUrl, signal });
   client.use({
     onRequest({ request }) {
       request.headers.set("X-API-Key", apiKey);

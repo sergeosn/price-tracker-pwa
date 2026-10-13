@@ -34,19 +34,21 @@ function EditProductForm({ product, onDone }: { product: Product; onDone: () => 
     validate: schemaResolver(editProductSchema, { sync: true }),
   });
 
-  function handleSubmit(values: EditProductFormValues) {
+  async function handleSubmit(values: EditProductFormValues) {
     const changes = buildProductUpdate(product, values);
     if (Object.keys(changes).length === 0) {
       onDone();
       return;
     }
-    updateProduct.mutate(changes, {
-      onSuccess: () => {
-        notifications.show({ color: "green", message: "Product updated" });
-        onDone();
-      },
-      onError: (error) => handleFormError(error, form.setErrors),
-    });
+    // Awaited rather than mutate() callbacks: those are skipped once the drawer is closed, and the
+    // user must still learn that the save failed.
+    try {
+      await updateProduct.mutateAsync(changes);
+      notifications.show({ color: "green", message: "Product updated" });
+      onDone();
+    } catch (error) {
+      handleFormError(error, form.setErrors);
+    }
   }
 
   return (
