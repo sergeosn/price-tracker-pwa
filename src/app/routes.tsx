@@ -1,4 +1,5 @@
 import { Navigate, type RouteObject } from "react-router";
+import { DomainRulesPage } from "../features/domain-rules/pages/DomainRulesPage";
 import { NewProductPage } from "../features/products/pages/NewProductPage";
 import { ProductDetailsPage } from "../features/products/pages/ProductDetailsPage";
 import { ProductsPage } from "../features/products/pages/ProductsPage";
@@ -20,6 +21,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <ProductsPage /> },
           { path: "products/new", element: <NewProductPage /> },
           { path: "products/:productId", element: <ProductDetailsPage /> },
+          { path: "domain-rules", element: <DomainRulesPage /> },
         ],
       },
       { path: "*", element: <Navigate to="/" replace /> },
