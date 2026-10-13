@@ -1,8 +1,15 @@
 # Price Tracker PWA
 
-A mobile-first Progressive Web App for [price-change-detector](https://github.com/sergeosn/price-change-detector):
-add products by URL, watch their price history and manage shop rules. A learning project built with
-React and TypeScript.
+[![CI](https://github.com/sergeosn/price-tracker-pwa/actions/workflows/ci.yml/badge.svg)](https://github.com/sergeosn/price-tracker-pwa/actions/workflows/ci.yml)
+
+A personal, self-hosted, mobile-first Progressive Web App for
+[price-change-detector](https://github.com/sergeosn/price-change-detector): add products by URL,
+watch their price history and manage shop rules. Built with React 19 and strict TypeScript,
+TanStack Query, Mantine, and an API client typed from the backend's OpenAPI schema.
+
+<p align="center">
+  <img src="docs/screenshots/demo.gif" alt="Demo: products list, a price check that finds a lower price, shop rules" width="300">
+</p>
 
 ## Features
 
@@ -13,6 +20,14 @@ React and TypeScript.
   "Check now", edit, delete.
 - Shops: domain rules with currency and price selector.
 - Installable PWA (app shell cached; data is always loaded from the API).
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/products.jpg" alt="Products list with status badges and a reached target" width="250">
+  <img src="docs/screenshots/product-details.jpg" alt="Product details with the price history chart" width="250">
+  <img src="docs/screenshots/shops.jpg" alt="Shop rules with currency and price selector" width="250">
+</p>
 
 ## Requirements
 
@@ -92,3 +107,7 @@ With the backend running (CORS enabled) and `npm run build && npm run preview`:
 - Installing on a phone requires HTTPS for both the app and the backend (browsers block plain-HTTP
   API calls from an HTTPS page). Deployment is not part of this project yet.
 - No offline data: the service worker caches only the app shell.
+
+## License
+
+[MIT](LICENSE)
